@@ -29,12 +29,15 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl))
+  (require 'cl)
+  (require 'macroexp)
+  (require 'subr-compat))
 
 ;;; silence byte-compiler
 (eval-when-compile
-  (when (version< emacs-version "24.3")
-    ;; sure it doesn't exist, but it won't be called anyway...
+  (if (version< emacs-version "23.1")
+      ;; sure it doesn't exist, but it won't be called anyway...
+      (autoload 'cl--compiling-file "cl")
     (declare-function cl--compiling-file "cl" t t)))
 
 (if (version< emacs-version "24.3")
