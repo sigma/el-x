@@ -1,0 +1,6 @@
+Because sometimes, Emacs core is not enough.
+
+Content:
+
+  - dflet.el: defines the `dflet' macro, to provide the historic behavior of
+    `flet', a global and dynamic temporary function (re)definition tool.
