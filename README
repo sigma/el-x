@@ -4,3 +4,5 @@ Content:
 
   - dflet.el: defines the `dflet' macro, to provide the historic behavior of
     `flet', a global and dynamic temporary function (re)definition tool.
+
+  - subr-compat.el: stubs `declare-function' for older Emacs
