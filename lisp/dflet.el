@@ -33,9 +33,12 @@
   (require 'macroexp)
   (require 'subr-compat))
 
+(or (require 'cl-lib nil t)
+    (defalias 'cl-letf 'letf))
+
 ;;; silence byte-compiler
 (eval-when-compile
-  (if (version< emacs-version "23.1")
+  (if (version< emacs-version "24.3")
       ;; sure it doesn't exist, but it won't be called anyway...
       (autoload 'cl--compiling-file "cl")
     (declare-function cl--compiling-file "cl" t t)))
@@ -56,7 +59,7 @@ definitions, or lack thereof).
 
 \(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
     (declare (indent 1) (debug cl-flet))
-    `(letf ,(mapcar
+    `(cl-letf ,(mapcar
              (lambda (x)
                (if (or (and (fboundp (car x))
                             (eq (car-safe (symbol-function (car x))) 'macro))
