@@ -33,9 +33,6 @@
   (require 'macroexp)
   (require 'subr-compat))
 
-(or (require 'cl-lib nil t)
-    (defalias 'cl-letf 'letf))
-
 ;;; silence byte-compiler
 (eval-when-compile
   (if (version< emacs-version "24.3")
@@ -59,7 +56,7 @@ definitions, or lack thereof).
 
 \(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
     (declare (indent 1) (debug cl-flet))
-    `(cl-letf ,(mapcar
+    `(letf ,(mapcar
              (lambda (x)
                (if (or (and (fboundp (car x))
                             (eq (car-safe (symbol-function (car x))) 'macro))
