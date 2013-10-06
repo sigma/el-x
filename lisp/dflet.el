@@ -1,6 +1,7 @@
 ;;; dflet.el --- dynamically-scoped flet
 
 ;; Copyright (C) 2012  Yann Hodique
+;; Copyright (C) 1993, 2001-2012  Free Software Foundation, Inc.
 
 ;; Author: Yann Hodique <yann.hodique@gmail.com>
 ;; Keywords: lisp
@@ -32,25 +33,61 @@
   (require 'macroexp)
   (require 'subr-compat))
 
-(if (version< emacs-version "24.3")
-    ;; before that version, flet was not marked as obsolete, so use it
-    (defalias 'dflet 'flet)
+;;; silence byte-compiler
+(eval-when-compile
+  (cond ((version< emacs-version "24.3")
+         ;; sure it doesn't exist, but it won't be called anyway...
+         (autoload 'cl--compiling-file "cl"))
+        ((version= emacs-version "24.3.1")
+         (declare-function cl--compiling-file "cl" t t))))
 
-  ;; This should really have some way to shadow 'byte-compile properties, etc.
-  (defmacro dflet (bindings &rest body)
-    "Make temporary overriding function definitions.
+(cond ((version< emacs-version "24.3")
+       ;; before that version, flet was not marked as obsolete, so use it
+       (defalias 'dflet 'flet))
+      ((version= emacs-version "24.3.1")
+       (defmacro dflet (bindings &rest body)
+         "Make temporary overriding function definitions.
 This is an analogue of a dynamically scoped `let' that operates on the function
 cell of FUNCs rather than their value cell.
 
 \(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
-    (declare (indent 1) (debug cl-flet))
-    `(cl-letf ,(mapcar
-                (lambda (x)
-                  (list
-                   (list 'symbol-function (list 'quote (car x)))
-                   (cons 'lambda (cons (cadr x) (cddr x)))))
-                bindings)
-       ,@body)))
+         `(letf ,(mapcar
+                  (lambda (x)
+                    (if (or (and (fboundp (car x))
+                                 (eq (car-safe (symbol-function (car x))) 'macro))
+                            (cdr (assq (car x) macroexpand-all-environment)))
+                        (error "Use `labels', not `dflet', to rebind macro names"))
+                    (let ((func `(cl-function
+                                  (lambda ,(cadr x)
+                                    (cl-block ,(car x) ,@(cddr x))))))
+                      (when (cl--compiling-file)
+                        ;; Bug#411.  It would be nice to fix this.
+                        (and (get (car x) 'byte-compile)
+                             (error "Byte-compiling a redefinition of `%s' \
+will not work - use `labels' instead" (symbol-name (car x))))
+                        ;; FIXME This affects the rest of the file, when it
+                        ;; should be restricted to the flet body.
+                        (and (boundp 'byte-compile-function-environment)
+                             (push (cons (car x) (eval func))
+                                   byte-compile-function-environment)))
+                      (list `(symbol-function ',(car x)) func)))
+                  bindings)
+                ,@body)))
+      (t
+       (defmacro dflet (bindings &rest body)
+         "Make temporary overriding function definitions.
+This is an analogue of a dynamically scoped `let' that operates on the function
+cell of FUNCs rather than their value cell.
+
+\(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
+         (declare (indent 1) (debug cl-flet))
+         `(cl-letf ,(mapcar
+                     (lambda (x)
+                       (list
+                        (list 'symbol-function (list 'quote (car x)))
+                        (cons 'lambda (cons (cadr x) (cddr x)))))
+                     bindings)
+            ,@body))))
 
 ;;;###autoload
 (autoload 'dflet "dflet")
