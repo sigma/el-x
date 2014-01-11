@@ -33,13 +33,17 @@
   (require 'macroexp)
   (require 'subr-compat))
 
+(ignore-errors
+  (require 'cl-lib))
+
 ;;; silence byte-compiler
 (eval-when-compile
-  (cond ((version< emacs-version "24.3")
-         ;; sure it doesn't exist, but it won't be called anyway...
-         (autoload 'cl--compiling-file "cl"))
-        ((version= emacs-version "24.3.1")
-         (declare-function cl--compiling-file "cl" t t))))
+  (unless (fboundp 'cl--compiling-file) ;; should be in cl-lib
+    (cond ((version< emacs-version "24.3")
+           ;; sure it doesn't exist, but it won't be called anyway...
+           (autoload 'cl--compiling-file "cl"))
+          ((version= emacs-version "24.3.1")
+           (declare-function cl--compiling-file "cl" t t)))))
 
 (cond ((version< emacs-version "24.3")
        ;; before that version, flet was not marked as obsolete, so use it
