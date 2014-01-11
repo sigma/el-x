@@ -89,6 +89,10 @@ cell of FUNCs rather than their value cell.
                      bindings)
             ,@body))))
 
+;;;###autoload
+(autoload 'dflet "dflet")
+
+;;;###autoload
 (defmacro adflet (bindings &rest body)
   "Anaphoric version of `dflet'. Binds `this-fn' to the original
 definition of the function."
@@ -100,8 +104,6 @@ definition of the function."
             bindings)
           ,@body))
 
-;;;###autoload
-(autoload 'dflet "dflet")
 
 (provide 'dflet)
 ;;; dflet.el ends here
