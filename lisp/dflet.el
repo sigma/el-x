@@ -89,6 +89,17 @@ cell of FUNCs rather than their value cell.
                      bindings)
             ,@body))))
 
+(defmacro adflet (bindings &rest body)
+  "Anaphoric version of `dflet'. Binds `this-fn' to the original
+definition of the function."
+  `(dflet ,(mapcar
+            (lambda (x)
+              (list (car x) (cadr x)
+                    `(let ((this-fn ,(symbol-function (car x))))
+                       ,@(cddr x))))
+            bindings)
+          ,@body))
+
 ;;;###autoload
 (autoload 'dflet "dflet")
 
